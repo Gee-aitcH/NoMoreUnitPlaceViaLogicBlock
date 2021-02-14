@@ -1,7 +1,7 @@
 {
-  "name": "ExampleGHPlugin",
+  "name": "NoMoreUnitPlaceViaLogicBlock",
   "author": "(G_H)",
-  "main": "exampleghplugin.ExampleGHPlugin",
-  "description": "An example plugin with the application of GH's plugin utils.",
-  "version": 1.1
+  "main": "nomoreunitplacevialogicblock.NoMoreUnitPlaceViaLogicBlock",
+  "description": "No More Unit Place Via Logic Block.",
+  "version": 1.0
 }
