@@ -17,11 +17,9 @@ import static pluginutil.PluginUtil.SendMode.*;
 @SuppressWarnings("unused")
 public class NoMoreUnitPlaceViaLogicBlock extends GHPlugin {
 
-    private Method tileConfig__forward;
-
-    protected void defConfig() {}
-
     public void init() {
+        super.init();
+
         Events.on(EventType.TileChangeEvent.class, event -> {
             if (!(event.tile.build instanceof LogicBlock.LogicBuild)) return;
             cleanUp((LogicBlock.LogicBuild) event.tile.build);
@@ -31,13 +29,6 @@ public class NoMoreUnitPlaceViaLogicBlock extends GHPlugin {
             if (!(event.tile instanceof LogicBlock.LogicBuild)) return;
             cleanUp((LogicBlock.LogicBuild) event.tile);
         });
-
-        try{
-            tileConfig__forward = Call.class.getDeclaredMethod("tileConfig__forward", NetConnection.class, Player.class, Building.class, Object.class);
-            tileConfig__forward.setAccessible(true);
-        } catch (NoSuchMethodException e) {
-            e.printStackTrace();
-        }
 
         log(info, "Initialized");
     }
@@ -51,15 +42,31 @@ public class NoMoreUnitPlaceViaLogicBlock extends GHPlugin {
 
         logic.updateCode(logic.code.replaceAll("ucontrol.*\n?", ""));
 
-        try {
-            if (tileConfig__forward != null) {
-                Player player = Groups.player.find(p -> p.name.equals(logic.lastAccessed));
-                tileConfig__forward.invoke(null, player == null || player.con == null ? null : player.con, player, logic, logic.config());
-            }
-        } catch (Exception e){
-            e.printStackTrace();
-        }
+        Player player = Groups.player.find(p -> p.name.equals(logic.lastAccessed));
+        if (player != null)
+            player.kick(cfg().kickReason);
 
-        log("Modified Logic Block. [" + logic.tile.x + ", " + logic.tile.y + ", " + logic.lastAccessed + "]");
+//        log("Modified Logic Block. [" + logic.tile.x + ", " + logic.tile.y + ", " + logic.lastAccessed + "]");
+        for (Player player1 : Groups.player) {
+            if (player1.admin)
+                player1.sendMessage("Modified Logic Block. [" + logic.tile.x + ", " + logic.tile.y + ", " + logic.lastAccessed + "]");
+        }
+    }
+
+    protected void defConfig() {
+        this.cfg = new NoMoreUnitPlaceViaLogicBlockConfig();
+    }
+
+    protected NoMoreUnitPlaceViaLogicBlockConfig cfg() {
+        return (NoMoreUnitPlaceViaLogicBlockConfig) cfg;
+    }
+
+    protected static class NoMoreUnitPlaceViaLogicBlockConfig extends GHPluginConfig{
+        private String kickReason;
+
+        @Override
+        public void reset() {
+            kickReason = "Unit Control in Logic Block is Prohibited in this server due to being a common griefing method.";
+        }
     }
 }
