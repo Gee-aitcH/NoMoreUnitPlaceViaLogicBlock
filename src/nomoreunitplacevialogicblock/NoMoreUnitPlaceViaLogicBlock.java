@@ -1,7 +1,11 @@
 package nomoreunitplacevialogicblock;
 
 import arc.Events;
+import arc.util.CommandHandler;
+import arc.util.Log;
+import com.google.gson.Gson;
 import mindustry.game.EventType;
+import mindustry.gen.Call;
 import mindustry.gen.Groups;
 import mindustry.gen.Player;
 import mindustry.world.blocks.logic.LogicBlock;
@@ -12,6 +16,7 @@ public class NoMoreUnitPlaceViaLogicBlock extends GHPlugin {
 
     public void init() {
         super.init();
+        log(new Gson().toJson(cfg));
 
         Events.on(EventType.TileChangeEvent.class, event -> {
             if (!(event.tile.build instanceof LogicBlock.LogicBuild)) return;
@@ -26,6 +31,17 @@ public class NoMoreUnitPlaceViaLogicBlock extends GHPlugin {
         log("Initialized");
     }
 
+    @Override
+    public void registerServerCommands(CommandHandler handler) {
+        handler.register("unitlogic", "<reload>", "No More Unit Place Via Logic Block", args ->{
+            String arg = args[0];
+            if (arg.equals("reload")) {
+                read();
+                log("Reloaded");
+            }
+        });
+    }
+
     private void cleanUp(LogicBlock.LogicBuild logic){
         if (logic.executor.instructions == null || logic.executor.instructions.length == 0)
             return;
@@ -33,13 +49,14 @@ public class NoMoreUnitPlaceViaLogicBlock extends GHPlugin {
         if (!logic.code.matches("(?s).*" + cfg().detector + ".*"))
             return;
 
-        logic.updateCode(logic.code.replaceAll(cfg().detector + ".*\n?", ""));
+        logic.updateCode(logic.code.replaceAll(cfg().detector + ".*\n?", cfg().replaceWith));
 
         Player player = Groups.player.find(p -> p.name.equals(logic.lastAccessed));
-        if (player != null)
+        if (player != null && cfg().kick)
             player.kick(cfg().kickReason);
 
-//        log("Modified Logic Block. [" + logic.tile.x + ", " + logic.tile.y + ", " + logic.lastAccessed + "]");
+        Call.tileConfig(null, logic, logic.config());
+
         for (Player player1 : Groups.player) {
             if (player1.admin)
                 player1.sendMessage("Modified Logic Block. [" + logic.tile.x + ", " + logic.tile.y + ", " + logic.lastAccessed + "]");
@@ -57,18 +74,44 @@ public class NoMoreUnitPlaceViaLogicBlock extends GHPlugin {
 
     protected static class NoMoreUnitPlaceViaLogicBlockConfig extends GHPluginConfig{
         private String detector;
+        private String replaceWith;
+        private Boolean kick;
         private String kickReason;
 
         @Override
-        public void reset() {
-            softReset();
+        protected void reset() {
+            detector = "ucontrol build";
+            replaceWith = "noop";
+            kick = true;
+            kickReason = "[scarlet]Unit Control in Logic Block is Prohibited in this server due to being a common griefing method.";
         }
 
-        public void softReset(){
-            if(detector == null)
+        @Override
+        public boolean softReset(){
+            boolean modified = false;
+            if(detector == null) {
                 detector = "ucontrol build";
-            if(kickReason == null)
+                modified = true;
+            }
+
+            if(replaceWith == null) {
+                replaceWith = "noop";
+                modified = true;
+            }
+
+            if(kick == null) {
+                kick = true;
+                modified = true;
+            }
+
+            if(kickReason == null) {
                 kickReason = "[scarlet]Unit Control in Logic Block is Prohibited in this server due to being a common griefing method.";
+                modified = true;
+            }
+
+            Log.info("Modified: " + modified);
+            return modified;
         }
+
     }
 }
