@@ -2,17 +2,10 @@ package nomoreunitplacevialogicblock;
 
 import arc.Events;
 import mindustry.game.EventType;
-import mindustry.gen.Building;
-import mindustry.gen.Call;
 import mindustry.gen.Groups;
 import mindustry.gen.Player;
-import mindustry.net.NetConnection;
 import mindustry.world.blocks.logic.LogicBlock;
 import pluginutil.GHPlugin;
-
-import java.lang.reflect.Method;
-
-import static pluginutil.PluginUtil.SendMode.*;
 
 @SuppressWarnings("unused")
 public class NoMoreUnitPlaceViaLogicBlock extends GHPlugin {
@@ -30,17 +23,17 @@ public class NoMoreUnitPlaceViaLogicBlock extends GHPlugin {
             cleanUp((LogicBlock.LogicBuild) event.tile);
         });
 
-        log(info, "Initialized");
+        log("Initialized");
     }
 
     private void cleanUp(LogicBlock.LogicBuild logic){
         if (logic.executor.instructions == null || logic.executor.instructions.length == 0)
             return;
 
-        if (!logic.code.matches("(?s).*ucontrol.*"))
+        if (!logic.code.matches("(?s).*" + cfg().detector + ".*"))
             return;
 
-        logic.updateCode(logic.code.replaceAll("ucontrol.*\n?", ""));
+        logic.updateCode(logic.code.replaceAll(cfg().detector + ".*\n?", ""));
 
         Player player = Groups.player.find(p -> p.name.equals(logic.lastAccessed));
         if (player != null)
@@ -57,16 +50,25 @@ public class NoMoreUnitPlaceViaLogicBlock extends GHPlugin {
         this.cfg = new NoMoreUnitPlaceViaLogicBlockConfig();
     }
 
+    @SuppressWarnings("unchecked")
     protected NoMoreUnitPlaceViaLogicBlockConfig cfg() {
         return (NoMoreUnitPlaceViaLogicBlockConfig) cfg;
     }
 
     protected static class NoMoreUnitPlaceViaLogicBlockConfig extends GHPluginConfig{
+        private String detector;
         private String kickReason;
 
         @Override
         public void reset() {
-            kickReason = "Unit Control in Logic Block is Prohibited in this server due to being a common griefing method.";
+            softReset();
+        }
+
+        public void softReset(){
+            if(detector == null)
+                detector = "ucontrol build";
+            if(kickReason == null)
+                kickReason = "[scarlet]Unit Control in Logic Block is Prohibited in this server due to being a common griefing method.";
         }
     }
 }
