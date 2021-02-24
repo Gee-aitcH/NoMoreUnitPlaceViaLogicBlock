@@ -14,18 +14,25 @@ repositories{
 
 ext{
     //the build number that this plugin is made for
-    mindustryVersion = 'v124'
+    mindustryVersion = 'v125'
+    ghpHash = '26b7bd47a0'
+
+    getGHPModule = {
+        if (new File(projectDir.parent, '/GHPluginUtil/').exists())
+            return files("../GHPluginUtil/build/libs/GHPluginUtil.jar")
+        else
+            return "com.github.Gee-aitcH:GHPluginUtil:$ghpHash"
+    }
 }
 
-dependencies{
-    implementation files('libs/GHPluginUtil.jar')
-//    implementation 'com.github.Gee-aitcH:GHPluginUtil:00fa48fcfb'
+dependencies {
+    implementation getGHPModule()
     compileOnly "com.github.Anuken.Arc:arc-core:$mindustryVersion"
     compileOnly "com.github.Anuken.Mindustry:core:$mindustryVersion"
 }
 
 jar{
-    archiveFileName = "${project.archivesBaseName}.jar"
+    archiveFileName = "${project.archivesBaseName}_${version}.jar"
     from{
         configurations.runtimeClasspath.collect{it.isDirectory() ? it : zipTree(it)}
     }

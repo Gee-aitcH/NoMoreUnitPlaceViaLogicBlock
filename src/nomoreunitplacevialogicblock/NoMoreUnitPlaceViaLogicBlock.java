@@ -11,6 +11,8 @@ import mindustry.gen.Player;
 import mindustry.world.blocks.logic.LogicBlock;
 import pluginutil.GHPlugin;
 
+import static pluginutil.PluginUtil.f;
+
 @SuppressWarnings("unused")
 public class NoMoreUnitPlaceViaLogicBlock extends GHPlugin {
 
@@ -52,14 +54,16 @@ public class NoMoreUnitPlaceViaLogicBlock extends GHPlugin {
         logic.updateCode(logic.code.replaceAll(cfg().detector + ".*\n?", cfg().replaceWith));
 
         Player player = Groups.player.find(p -> p.name.equals(logic.lastAccessed));
-        if (player != null && cfg().kick)
+        if (player != null && cfg().kick) {
             player.kick(cfg().kickReason);
+            log(f("Kicked [%s] for putting [%s] in logic block.", player.name, cfg().detector));
+        }
 
         Call.tileConfig(null, logic, logic.config());
 
         for (Player player1 : Groups.player) {
             if (player1.admin)
-                player1.sendMessage("Modified Logic Block. [" + logic.tile.x + ", " + logic.tile.y + ", " + logic.lastAccessed + "]");
+                player1.sendMessage("Modified logic block. [" + logic.tile.x + ", " + logic.tile.y + ", " + logic.lastAccessed + "]");
         }
     }
 
